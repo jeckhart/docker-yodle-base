@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /tmp/docker-yodle-base/profile
+source /build/docker-yodle-base/profile
 
 apt-get clean
 rm -rf /tmp/* /var/tmp/*

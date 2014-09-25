@@ -1,6 +1,6 @@
 FROM ubuntu
 MAINTAINER John Eckhart "jeckhart@yodle.com"
 
-ADD build /tmp/docker-yodle-base
+ADD build /build/docker-yodle-base
 
-RUN /tmp/docker-yodle-base/prepare.sh && /tmp/docker-yodle-base/cleanup.sh
+RUN /build/docker-yodle-base/prepare.sh && /build/docker-yodle-base/cleanup.sh
