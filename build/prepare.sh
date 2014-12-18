@@ -18,7 +18,7 @@ dpkg-divert --local --rename --add /sbin/initctl && ln -sf /bin/true /sbin/initc
 $apt_get update
 
 # Add tools for apt https and repo mgmt
-$apt_get install apt-transport-https ca-certificates software-properties-common
+$apt_get install apt-transport-https ca-certificates
 
 # Clean up locales (we only need en_US.UTF8)
 echo localepurge localepurge/nopurge select en_US.UTF-8   | /usr/bin/debconf-set-selections
@@ -29,4 +29,6 @@ echo "en_US UTF-8" > /var/lib/locales/supported.d/en
 locale-gen en_US
 localepurge
 
-$apt_get install rsync telnet screen man wget git
+$apt_get install rsync telnet screen wget
+
+cp /build/docker-yodle-base/add-apt-repository /usr/bin

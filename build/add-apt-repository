@@ -1,0 +1,94 @@
+#!/bin/sh
+
+set -e
+set -x
+
+NAME="$1"
+SECTION="main"
+
+encode() {
+	echo "$@" | sed -e 's|https\?://||g' -e 's/[^ a-zA-Z0-9_-]/_/g'
+}
+
+codename() {
+	if test -f /etc/lsb-release; then
+		source /etc/lsb-release
+		CODENAME=$DISTRIB_CODENAME
+	elif test -f /etc/debian_version; then
+		RELEASE=`cat /etc/debian_version`
+		case $RELEASE in 
+			1.1 ) CODENAME='buzz';;
+		    1.2 ) CODENAME='rex';;
+		    1.3 ) CODENAME='bo';;
+		    2.0 ) CODENAME='hamm';;
+		    2.1 ) CODENAME='slink';;
+		    2.2 ) CODENAME='potato';;
+		    3.0 ) CODENAME='woody';;
+		    3.1 ) CODENAME='sarge';;
+		    4.0 ) CODENAME='etch';;
+		    5.0 ) CODENAME='lenny';;
+		    6.0 ) CODENAME='squeeze';;
+		    7*  ) CODENAME='wheezy';;
+		    8*  ) CODENAME='jessie';;
+		esac
+	fi
+	echo $CODENAME
+}
+
+CODENAME=`codename` #wheezy
+
+if test `expr substr $NAME 1 4` = "ppa:"; then
+	LEN=`expr length $NAME`
+	REPO_LEN=`expr $LEN - 4`
+	REPO=`expr substr $NAME 5 $REPO_LEN`
+	INDEX=`expr index $REPO /`
+	OWNER_LEN=`expr $INDEX - 1`
+	NAME_INDEX=`expr $INDEX + 1`
+	NAME_LEN=`expr $REPO_LEN - $INDEX`
+	PPA_OWNER=`expr substr $REPO 1 $OWNER_LEN`
+	PPA_NAME=`expr substr $REPO $NAME_INDEX $NAME_LEN`
+
+	shift
+	if test -n "$1"; then
+		CODENAME=`encode "$1"`
+		echo "$1"
+		shift
+	fi
+	if test -n "$1"; then
+		echo "$@"
+		SECTION=`encode "$@"`
+	fi
+
+	SOURCELINEFILE="$PPA_OWNER-$PPA_NAME-$CODENAME.list"
+	URL="deb http://ppa.launchpad.net/$PPA_OWNER/$PPA_NAME/ubuntu $CODENAME $SECTION"
+
+	echo "$URL" > /etc/apt/sources.list.d/$SOURCELINEFILE
+
+	KEY_URL="https://launchpad.net/api/1.0/~$PPA_OWNER/+archive/$PPA_NAME"
+	SIGNING_KEY=`wget -O- $KEY_URL | sed -r -e 's/.*"signing_key_fingerprint": "([0-9a-fA-F]*)".*/\1/'`
+	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80/ --recv $SIGNING_KEY
+else
+	TYPE="deb"
+	shift
+	REPO=$1
+	if test `expr substr $REPO 1 3` = "deb"; then
+		TYPE=$REPO
+		shift
+		REP=$1
+	fi
+
+	shift
+	if test -n "$1"; then
+		CODENAME=`encode "$1"`
+		shift
+	fi
+	if test -n "$1"; then
+		SECTION=`encode "$@"`
+		shift
+	fi
+
+	SOURCELINEFILE=`encode $REPO`"-$CODENAME.list"
+	URL="deb $REPO $CODENAME $SECTION"
+	echo "$URL" > /etc/apt/sources.list.d/$SOURCELINEFILE
+
+fi
